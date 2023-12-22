@@ -21,12 +21,8 @@ module OmniAuth
         param_name: 'token'
       }
 
-      # User ID is not guaranteed to be globally unique across all Hubspot users.
-      # The combination of user ID and Hub ID, on the other hand, is guaranteed
-      # to be globally unique.
       uid { "#{identity['user_id']}-#{identity['hub_id']}" }
 
-      # Make sure to record refresh token
       credentials do
         {
           token:          access_token.token,
@@ -36,22 +32,6 @@ module OmniAuth
           expires:        access_token.expires?
         }
       end
-
-      # {
-      #   "token": "CJSP5qf1KhICAQEYs-gDIIGOBii1hQIyGQAf3xBKmlwHjX7OIpuIFEavB2-qYAGQsF4",
-      #   "user": "test@hubspot.com",
-      #   "hub_domain": "demo.hubapi.com",
-      #   "scopes": [
-      #     "contacts",
-      #     "automation",
-      #     "oauth"
-      #   ],
-      #   "hub_id": 62515,
-      #   "app_id": 456,
-      #   "expires_in": 21588,
-      #   "user_id": 123,
-      #   "token_type": "access"
-      # }
 
       info do
         {
@@ -86,10 +66,13 @@ module OmniAuth
         @identity ||= access_token.get("/oauth/v1/access-tokens/#{access_token.token}").parsed
       end
 
-      #private
-
       def callback_url
         full_host + script_name + callback_path
+      end
+
+      def build_access_token
+        verifier = request.params["code"]
+        client.auth_code.get_token(verifier, :redirect_uri => callback_url)
       end
     end
   end
